@@ -1,0 +1,29 @@
+{
+  "purpose": "Reference data contract; executable training settings are in training/train_pointrend.py",
+  "training_script": "training/train_pointrend.py",
+  "colab_notebook": "notebooks/barnacle_training_colab.ipynb",
+  "candidate_model": "Mask R-CNN R50-FPN with PointRend",
+  "num_foreground_classes": 1,
+  "category_id": 1,
+  "category_name": "barnacle_annotated_region",
+  "dataset_root": "artifacts/pretraining",
+  "train_annotations": "annotations/train.json",
+  "validation_annotations": "annotations/val.json",
+  "mask_format": "bitmask",
+  "coco_segmentation_format": "uncompressed_rle",
+  "image_color_order_from_reader": "RGB",
+  "tile_size": 640,
+  "tile_overlap": 0.25,
+  "maximum_detections_per_tile": 600,
+  "diagnostic_note": "--allow-provisional explicitly permits exploratory training; it does not establish label correctness",
+  "resize_policy": "preserve_native_pixels; no mandatory square padding",
+  "require_reviewed_dataset": true,
+  "class_mapping_note": "COCO foreground ID 1 maps to contiguous class 0 in Detectron2; torchvision uses foreground ID 1",
+  "training_prerequisites": [
+    "Confirm anatomical target and annotation completeness",
+    "Review automatic ROI polygons",
+    "Resolve flagged outline components using corrected full-canvas instance label PNGs",
+    "Pass validate-data --require-reviewed",
+    "Install and smoke-test training framework and pretrained weights"
+  ]
+}

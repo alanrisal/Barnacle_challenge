@@ -1,0 +1,6 @@
+{
+  "images": [
+    {"id": "unseen_img1", "path": "../src/barnacle_challenge/unseen_img1.png", "region_mode": "auto"},
+    {"id": "unseen_img2", "path": "../src/barnacle_challenge/unseen_img2.png", "region_mode": "whole_image"}
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "root": "..",
+  "region_config": {
+    "lower_hsv": [75, 55, 20],
+    "upper_hsv": [110, 255, 255],
+    "analysis_max_size": 1600,
+    "close_kernel": 9,
+    "inset_px": 2.0
+  },
+  "extraction_config": {
+    "blue_margin": 35,
+    "min_hole_area_px": 12,
+    "min_stroke_component_px": 8,
+    "max_instance_area_px": 10000
+  },
+  "scenes": [
+    {
+      "id": "img1",
+      "group_id": "photo_img1",
+      "image": "barnacles/Barnacles/img1.png",
+      "outline_mask": "barnacles/Barnacles/mask1.png",
+      "split": "train",
+      "region_mode": "auto",
+      "annotation_target": "supplied_outline_region_anatomy_unconfirmed",
+      "annotations_reviewed": false,
+      "annotation_coverage_verified": false
+    },
+    {
+      "id": "img2",
+      "group_id": "photo_img2",
+      "image": "src/barnacle_challenge/img2.png",
+      "outline_mask": "barnacles/Barnacles/mask2.png",
+      "split": "val",
+      "region_mode": "auto",
+      "annotation_target": "supplied_outline_region_anatomy_unconfirmed",
+      "annotations_reviewed": false,
+      "annotation_coverage_verified": false
+    },
+    {
+      "id": "unseen_img1",
+      "group_id": "unseen_unverified_relationship",
+      "image": "src/barnacle_challenge/unseen_img1.png",
+      "split": "inference",
+      "region_mode": "auto"
+    },
+    {
+      "id": "unseen_img2",
+      "group_id": "unseen_unverified_relationship",
+      "image": "src/barnacle_challenge/unseen_img2.png",
+      "split": "inference",
+      "region_mode": "whole_image"
+    }
+  ]
+}
