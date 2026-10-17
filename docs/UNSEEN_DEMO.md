@@ -4,7 +4,14 @@ Use the existing Colab T4 session where Detectron2/PointRend already works. No
 retraining or reinstall is needed. This runs the trained model on the two actual
 unseen originals; it does not import supplied annotation masks as predictions.
 
-## Add the demo to your existing session
+## Use the combined final bundle
+
+For a fresh session, open `notebooks/barnacle_training_colab_final.ipynb` and upload
+`artifacts/barnacle_colab_final.zip` in the first upload cell. It already contains
+the two unseen images, demo code, resume support and live plots. Enable the optional
+unseen-demo cell when ready; no second upload is needed.
+
+## Add the demo to an older session
 
 Download `artifacts/barnacle_unseen_demo.zip` from the workspace. This small bundle
 includes the two unseen original photographs, portable input metadata, and updated

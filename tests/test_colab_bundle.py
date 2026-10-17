@@ -66,15 +66,21 @@ class ColabBundleTests(unittest.TestCase):
             self.assertIn("underlying build error", log.read_text())
 
     def test_notebook_code_cells_compile_and_have_no_saved_outputs(self):
-        notebook = json.loads((ROOT / "notebooks/barnacle_training_colab.ipynb").read_text(encoding="utf-8"))
+        notebook = json.loads((ROOT / "notebooks/barnacle_training_colab_final.ipynb").read_text(encoding="utf-8"))
         self.assertEqual(notebook["nbformat"], 4)
         for index, cell in enumerate(notebook["cells"]):
             if cell["cell_type"] == "code":
                 compile("".join(cell["source"]), f"colab-cell-{index}", "exec")
                 self.assertEqual(cell["outputs"], [])
                 self.assertIsNone(cell["execution_count"])
+        code = "\n".join("".join(c["source"]) for c in notebook["cells"] if c["cell_type"] == "code")
+        self.assertEqual(code.count("files.upload()"), 1)
+        self.assertNotIn("training_resume_patch.zip", code)
+        self.assertIn('LATEST_OUTPUT = NEW_OUTPUT', code)
+        self.assertIn('LATEST_OUTPUT = FINETUNE_OUTPUT', code)
+        self.assertIn('LATEST_OUTPUT = SMOKE_OUTPUT', code)
 
-    def test_upload_bundle_contains_code_and_data_without_original_source_images(self):
+    def test_upload_bundle_contains_resume_data_and_portable_unseen_demo(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
             dataset = root / "dataset"
@@ -88,6 +94,18 @@ class ColabBundleTests(unittest.TestCase):
             training = repository / "training"
             training.mkdir()
             (training / "train_pointrend.py").write_text("# test trainer")
+            (training / "live_colab.py").write_text("# test live plot")
+            configs = repository / "configs"
+            configs.mkdir()
+            (source / "unseen.png").write_bytes(b"unseen demo image")
+            (configs / "unseen_demo.json").write_text(json.dumps({"images": [
+                {"id": "unseen_img1", "path": "../src/barnacle_challenge/unseen.png", "region_mode": "auto"}
+            ]}))
+            (repository / "notebooks").mkdir()
+            (repository / "notebooks/barnacle_training_colab_final.ipynb").write_text("{}")
+            (repository / "docs").mkdir()
+            for name in ("COLAB_TRAINING.md", "UNSEEN_DEMO.md"):
+                (repository / "docs" / name).write_text("# test guide")
             archive = root / "upload.zip"
             packaging.package(dataset, archive, repository)
             with zipfile.ZipFile(archive) as bundle:
@@ -96,6 +114,11 @@ class ColabBundleTests(unittest.TestCase):
                 self.assertIn("barnacle_training/dataset/dataset_summary.json", names)
                 self.assertIn("barnacle_training/training/train_pointrend.py", names)
                 self.assertIn("barnacle_training/src/barnacle_challenge/io.py", names)
+                self.assertEqual(bundle.read("barnacle_training/training/live_colab.py"), b"# test live plot")
+                demo = json.loads(bundle.read("barnacle_training/demo/demo_inputs.json"))
+                for scene in demo["images"]:
+                    self.assertEqual(bundle.read("barnacle_training/demo/" + scene["path"]), b"unseen demo image")
+                self.assertFalse(json.loads(bundle.read("barnacle_training/bundle_manifest.json"))["model_weights_included"])
                 self.assertFalse(any(name.endswith("original.png") for name in names))
             with self.assertRaises(ValueError):
                 packaging.package(dataset, archive, repository)

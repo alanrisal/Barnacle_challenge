@@ -1,19 +1,18 @@
-# Training on Google Colab with a T4
+# Training Set up 
 
-Open [barnacle_training_colab.ipynb](../notebooks/barnacle_training_colab.ipynb)
-in Colab: File > Upload notebook. Select Runtime > Change runtime type > T4 GPU.
-The notebook contains the complete upload, installation, diagnostic, and optional
-fine-tuning workflow. Run cells in order and inspect the diagnostic before enabling
-the longer run. This code has local syntax, bundle, and data checks; the actual
-CUDA build and GPU training must be verified in your Colab runtime.
+Open [barnacle_training_colab_final.ipynb](../notebooks/barnacle_training_colab_final.ipynb)
+in Colab: File --> upload then select runtime (T4)
 
 ## Local files to upload
 
-The initial bundle is `artifacts/barnacle_colab.zip`. Upload it when the notebook's
-upload cell prompts you. You do not need to upload the entire repository, install
+Init bundle is `artifacts/barnacle_colab_final.zip`. Notebook cell will prmpt the uplaod. You do not need to upload the entire repository, install
 the local Python package in Colab, or move your Windows virtual environment.
-The ZIP contains prepared data, preparation/validation modules, and standalone
-training scripts; the package's Python >=3.13 install metadata is not used there.
+The ZIP contains prepared data, preparation/validation modules, current training
+and resume scripts, live loss plots, the fixed wheel installer, and both unseen
+images with demo/report code. No separate resume or demo patch uploads are needed.
+It also includes the clean final notebook and guides. Your original notebook with
+saved training results is preserved. Model weights remain in your selected Drive
+run; they are not included in this upload. The package's Python >=3.13 install metadata is not used there.
 The scripts use Python 3.10+ syntax and must pass their runtime checks in Colab.
 
 Regenerate a bundle after changing labels or training scripts:
@@ -114,7 +113,8 @@ It does not promise bit-identical data-order/RNG replay.
 with iteration 199 has completed 200 steps. `--steps 400` adds 200 steps;
 `--steps 600` adds 400. The trainer rejects totals already reached.
 
-In an existing Colab session, upload the updated `training/train_pointrend.py`
+The combined final bundle already includes these scripts. For an older Colab
+session using the original bundle, upload the updated `training/train_pointrend.py`
 and `training/live_colab.py` into `WORKSPACE / "training"`. No dataset re-upload
 or Detectron2 reinstall is needed. The updated notebook has a resume cell and
 uses the live plot for fresh training too.

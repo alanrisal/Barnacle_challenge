@@ -11,3 +11,4 @@ wheels/
 
 # Reproducible generated crops, masks, tiles and review reports
 artifacts/
+docs/
