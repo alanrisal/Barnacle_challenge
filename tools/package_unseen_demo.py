@@ -23,6 +23,11 @@ def package_demo(repository, output):
     for folder in ("training", "src/barnacle_challenge"):
         assets.extend((path, path.relative_to(repository).as_posix())
                       for path in (repository / folder).rglob("*.py"))
+    assets.extend((path, path.relative_to(repository).as_posix())
+                  for path in (repository / "training").glob("*.html"))
+    for name in ("notebooks/barnacle_scientist_demo.ipynb", "docs/SCIENTIST_DEMO.md"):
+        if (repository / name).is_file():
+            assets.append((repository / name, name))
     output.parent.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(output, "w", compression=zipfile.ZIP_STORED) as archive:
         for path, name in assets:

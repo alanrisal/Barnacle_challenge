@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Config Map</title>
+<link rel="stylesheet" href="../assets/course.css">
+</head>
+<body class="reference">
+<main>
+
+<nav class="course-nav">
+  <span>Barnacle model course</span>
+  <a href="../lessons/0001-follow-one-tile-through-your-model.html">Lesson 1</a>
+  <a href="glossary.html">Glossary</a>
+</nav>
+
+<p class="kicker">Reference · review prep</p>
+<h1>Config map</h1>
+<p class="lede">Every setting in <code>training/train_pointrend.py</code>, the stage it acts on, the Detectron2 default, and the
+reason to give in review. Highlighted rows differ from the default.</p>
+
+<p>Defaults are from <a href="https://github.com/facebookresearch/detectron2/blob/main/detectron2/config/defaults.py">defaults.py</a>,
+<a href="https://github.com/facebookresearch/detectron2/blob/main/configs/Base-RCNN-FPN.yaml">Base-RCNN-FPN.yaml</a>
+and <a href="https://github.com/facebookresearch/detectron2/blob/main/projects/PointRend/point_rend/config.py">PointRend config.py</a>.
+"Why" entries marked <em>untested</em> are reasonable choices that were never compared against an alternative. Say so if asked.</p>
+
+<h2>Model</h2>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Setting</th><th>Stage</th><th>Default</th><th>Yours</th><th>Why</th></tr></thead>
+<tbody>
+<tr class="changed"><td><code>MODEL.WEIGHTS</code></td><td>all</td><td>(none)</td><td>PointRend R50-FPN 3× COCO (38.3 mask AP)</td><td>Transfer learning: start from a model that already segments objects.</td></tr>
+<tr class="changed"><td><code>ROI_HEADS.NUM_CLASSES</code></td><td>3</td><td>80</td><td>1</td><td>Single foreground class. Class-specific output layers get re-initialised.</td></tr>
+<tr class="changed"><td><code>POINT_HEAD.NUM_CLASSES</code></td><td>4</td><td>80</td><td>1</td><td>Must match the box head.</td></tr>
+<tr class="changed"><td><code>ANCHOR_GENERATOR.SIZES</code></td><td>2</td><td>32…512</td><td>8, 16, 32, 64, 128</td><td>Barnacles ≈ 18 px across (median mask ≈ 341 px²).</td></tr>
+<tr class="changed"><td><code>RPN.POST_NMS_TOPK_TRAIN</code></td><td>2</td><td>1000</td><td>3000</td><td>Up to 396 objects per tile; keep plenty of candidates.</td></tr>
+<tr class="changed"><td><code>RPN.POST_NMS_TOPK_TEST</code></td><td>2</td><td>1000</td><td>2000</td><td>Same, at inference.</td></tr>
+<tr class="changed"><td><code>ROI_HEADS.BATCH_SIZE_PER_IMAGE</code></td><td>3</td><td>512</td><td>256</td><td>Cheaper RoI head per step on a T4. <em>Untested.</em></td></tr>
+<tr class="changed"><td><code>ROI_HEADS.POSITIVE_FRACTION</code></td><td>3</td><td>0.25</td><td>0.5</td><td>Dense scene, so sample more positives. <em>Untested.</em></td></tr>
+<tr><td><code>ROI_HEADS.SCORE_THRESH_TEST</code></td><td>3</td><td>0.05</td><td>0.05</td><td>Low floor so AP sees low-score candidates.</td></tr>
+<tr class="changed"><td><code>TEST.DETECTIONS_PER_IMAGE</code></td><td>3</td><td>100</td><td>600</td><td>Must exceed the 396-instance maximum. AP is therefore not standard COCO AP@100.</td></tr>
+<tr><td><code>POINT_HEAD.TRAIN_NUM_POINTS</code></td><td>4</td><td>14² = 196</td><td>196</td><td>Paper default.</td></tr>
+<tr><td><code>POINT_HEAD.OVERSAMPLE_RATIO</code> (k) / <code>IMPORTANCE_SAMPLE_RATIO</code> (β)</td><td>4</td><td>3 / 0.75</td><td>3 / 0.75</td><td>Paper default.</td></tr>
+<tr><td><code>POINT_HEAD.SUBDIVISION_STEPS</code> / <code>NUM_POINTS</code></td><td>4</td><td>5 / 28² = 784</td><td>5 / 784</td><td>7 → 224 output resolution.</td></tr>
+</tbody>
+</table>
+</div>
+
+<h2>Data</h2>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Setting</th><th>Default</th><th>Yours</th><th>Why</th></tr></thead>
+<tbody>
+<tr class="changed"><td>Mapper augmentations</td><td>ResizeShortestEdge (short side 640–800 in training, 800 at test)</td><td>none (smoke); flips + brightness/contrast 0.85–1.15 (finetune)</td><td>Passing <code>augmentations=</code> replaces the default resize, so tiles stay at native pixels. No interpolation of small objects.</td></tr>
+<tr><td><code>INPUT.MASK_FORMAT</code></td><td>bitmask (PointRend base)</td><td>bitmask</td><td>PointRend instance segmentation does not work with polygon masks.</td></tr>
+<tr class="changed"><td><code>DATALOADER.NUM_WORKERS</code></td><td>4</td><td>0</td><td>Simplest, most reliable loader in Colab. <em>Untested.</em></td></tr>
+</tbody>
+</table>
+</div>
+
+<h2>Solver</h2>
+<div class="table-wrap">
+<table>
+<thead><tr><th>Setting</th><th>Default (COCO 3× recipe)</th><th>Yours</th><th>Why</th></tr></thead>
+<tbody>
+<tr class="changed"><td><code>SOLVER.IMS_PER_BATCH</code></td><td>16</td><td>1</td><td>One T4 GPU; large tiles with many instances.</td></tr>
+<tr class="changed"><td><code>SOLVER.BASE_LR</code></td><td>0.02 (at batch 16)</td><td>0.00025</td><td>Small LR for fine-tuning at batch 1. <em>Not tuned.</em> Lesson 3 covers this.</td></tr>
+<tr class="changed"><td><code>SOLVER.MAX_ITER</code></td><td>270k (3×)</td><td>600 (finetune), 50 (smoke)</td><td>Starting experiment. 600 steps over 9 tiles ≈ 67 passes over the data.</td></tr>
+<tr class="changed"><td><code>SOLVER.STEPS</code></td><td>LR drops late in training</td><td>() no drops</td><td>Constant LR after warmup.</td></tr>
+<tr class="changed"><td><code>SOLVER.WARMUP_ITERS</code></td><td>1000</td><td>min(20, steps/10)</td><td>Short warmup for a short run.</td></tr>
+<tr class="changed"><td><code>SOLVER.AMP.ENABLED</code></td><td>False</td><td>True</td><td>Mixed precision: faster and lighter on a T4.</td></tr>
+<tr class="changed"><td><code>TEST.EVAL_PERIOD</code></td><td>0</td><td>100 (finetune)</td><td>Validation every 100 steps; <code>BestCheckpointer</code> keeps the best segm/AP.</td></tr>
+</tbody>
+</table>
+</div>
+
+</main>
+</body>
+</html>

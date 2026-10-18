@@ -66,7 +66,7 @@ class ColabBundleTests(unittest.TestCase):
             self.assertIn("underlying build error", log.read_text())
 
     def test_notebook_code_cells_compile_and_have_no_saved_outputs(self):
-        notebook = json.loads((ROOT / "notebooks/barnacle_training_colab_final.ipynb").read_text(encoding="utf-8"))
+        notebook = json.loads((ROOT / "notebooks/barnacle_training_colab_empty.ipynb").read_text(encoding="utf-8"))
         self.assertEqual(notebook["nbformat"], 4)
         for index, cell in enumerate(notebook["cells"]):
             if cell["cell_type"] == "code":

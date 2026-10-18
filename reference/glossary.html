@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Course Glossary</title>
+<link rel="stylesheet" href="../assets/course.css">
+</head>
+<body class="reference">
+<main>
+
+<nav class="course-nav">
+  <span>Barnacle model course</span>
+  <a href="../lessons/0001-follow-one-tile-through-your-model.html">Lesson 1</a>
+  <a href="config-map.html">Config map</a>
+</nav>
+
+<p class="kicker">Reference</p>
+<h1>Glossary</h1>
+<p class="lede">The terms used in every lesson. Lessons use these exact words. Grows as the course does.</p>
+
+<h2>Architecture</h2>
+<dl class="glossary">
+  <dt>Two-stage detector</dt>
+  <dd>Stage one proposes candidate regions. Stage two classifies each one, refines its box and (in Mask R-CNN) predicts its mask. <a href="https://arxiv.org/abs/1703.06870">Mask R-CNN §3</a>.</dd>
+
+  <dt>Backbone</dt>
+  <dd>The CNN that turns pixels into feature maps. Yours is ResNet-50 (R50).</dd>
+
+  <dt>FPN (Feature Pyramid Network)</dt>
+  <dd>Adds a top-down path to the backbone so every scale carries strong features. Outputs P2–P6.</dd>
+
+  <dt>P2 … P6</dt>
+  <dd>Pyramid levels with strides 4, 8, 16, 32 and 64 px. For a 640 tile, P2 is 160 × 160 × 256. Small barnacles live mostly on P2/P3.</dd>
+
+  <dt>Stride</dt>
+  <dd>How many input pixels one feature cell steps over. Stride 4 means one cell per 4 × 4 pixels.</dd>
+
+  <dt>Anchor</dt>
+  <dd>A reference box placed at every feature cell (one size per level × 3 aspect ratios). The RPN predicts objectness and a box shift for each one.</dd>
+
+  <dt>RPN (Region Proposal Network)</dt>
+  <dd>Stage one. Scores anchors for objectness and regresses them into proposals.</dd>
+
+  <dt>Objectness</dt>
+  <dd>The RPN's "is there any object here?" score. It is class-agnostic.</dd>
+
+  <dt>Proposal / RoI</dt>
+  <dd>A candidate box passed to stage two. RoI means region of interest.</dd>
+
+  <dt>NMS (non-maximum suppression)</dt>
+  <dd>Removes boxes that overlap a higher-scoring box above an IoU threshold. RPN uses 0.7; the final test pass uses 0.5.</dd>
+
+  <dt>RoIAlign</dt>
+  <dd>Extracts a fixed-size feature grid for a box by bilinear sampling, with no rounding to whole cells. Replaced RoIPool, whose rounding misaligns masks.</dd>
+
+  <dt>Box head</dt>
+  <dd>Stage two classifier + box regressor working on 7 × 7 RoIAlign features.</dd>
+
+  <dt>Mask head</dt>
+  <dd>Predicts a per-box binary mask. Standard Mask R-CNN: 28 × 28. Yours: PointRend.</dd>
+
+  <dt>PointRend</dt>
+  <dd>A mask head that predicts a coarse 7 × 7 mask and then refines it only at uncertain points, up to 224 × 224. <a href="https://arxiv.org/abs/1912.08193">Kirillov et al.</a></dd>
+
+  <dt>Coarse head</dt>
+  <dd>PointRend's lightweight head: a 14 × 14 grid of P2 features goes through a conv and a 2 × 1024 MLP and comes out as a 7 × 7 mask.</dd>
+
+  <dt>Point head</dt>
+  <dd>An MLP (3 × 256 hidden) applied per point. Its input is the P2 feature (256-d) plus the coarse prediction at that point.</dd>
+
+  <dt>Instance</dt>
+  <dd>One detected object: score + box + mask. Your output is a list of instances per tile.</dd>
+</dl>
+
+<h2>Training</h2>
+<dl class="glossary">
+  <dt>Loss terms</dt>
+  <dd><code>loss_rpn_cls</code>, <code>loss_rpn_loc</code> (stage 1, the RPN); <code>loss_cls</code>, <code>loss_box_reg</code> (box head); <code>loss_mask</code>, <code>loss_mask_point</code> (PointRend). They are summed without re-weighting.</dd>
+
+  <dt>Iteration / step</dt>
+  <dd>One optimiser update on one batch. Your batch is one tile, so 600 steps = 600 tiles seen.</dd>
+
+  <dt>Detection cap</dt>
+  <dd><code>TEST.DETECTIONS_PER_IMAGE</code>: maximum instances returned per image. Default 100; yours 600.</dd>
+</dl>
+
+</main>
+</body>
+</html>

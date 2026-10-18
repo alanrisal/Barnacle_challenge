@@ -16,6 +16,11 @@ def package(dataset: Path, output: Path, repository: Path) -> int:
     for folder in ("src/barnacle_challenge", "training"):
         files.extend((p, Path("barnacle_training") / p.relative_to(repository))
                      for p in (repository / folder).rglob("*.py"))
+    files.extend((p, Path("barnacle_training") / p.relative_to(repository))
+                 for p in (repository / "training").glob("*.html"))
+    for extra in ("notebooks/barnacle_scientist_demo.ipynb", "docs/SCIENTIST_DEMO.md"):
+        if (repository / extra).is_file():
+            files.append((repository / extra, Path("barnacle_training") / extra))
     manifest_path = repository / "configs/unseen_demo.json"
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     for scene in manifest["images"]:
@@ -24,6 +29,8 @@ def package(dataset: Path, output: Path, repository: Path) -> int:
         scene["path"] = name
         files.append((source, Path("barnacle_training/demo") / name))
     notebook = repository / "notebooks/barnacle_training_colab_final.ipynb"
+    if not notebook.is_file():
+        notebook = repository / "notebooks/barnacle_training_colab_empty.ipynb"
     files.append((notebook, Path("barnacle_training/notebooks") / notebook.name))
     for name in ("COLAB_TRAINING.md", "UNSEEN_DEMO.md"):
         files.append((repository / "docs" / name, Path("barnacle_training/docs") / name))
@@ -44,7 +51,7 @@ def package(dataset: Path, output: Path, repository: Path) -> int:
             "includes": ["prepared_dataset", "training_resume", "live_training_plots",
                          "wheel_installer", "unseen_demo", "clean_notebook"],
             "model_weights_included": False,
-            "notebook": "notebooks/barnacle_training_colab_final.ipynb",
+            "notebook": "notebooks/" + notebook.name,
         }, indent=2))
     return len(files) + 2
 
