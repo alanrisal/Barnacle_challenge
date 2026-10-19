@@ -58,7 +58,7 @@ def load_predictor(run_dir, checkpoint_name, minimum_score, device):
     provenance = {"run_directory": str(run_dir), "checkpoint": str(checkpoint),
                   "checkpoint_sha256": sha256(checkpoint), "config_sha256": sha256(run_dir / "config.yaml"),
                   "checkpoint_completed_steps": int(iteration) + 1 if iteration is not None else None,
-                  "device": device, "torch": torch.__version__,
+                  "device": device, "torch": str(torch.__version__),
                   "max_detections_per_tile": cfg.TEST.DETECTIONS_PER_IMAGE,
                   "annotation_origin": "trained_model_predictions"}
     return predict, provenance, output_counts
