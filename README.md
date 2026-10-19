@@ -1,8 +1,10 @@
-# Intertidal
+﻿# Intertidal
 
 ### Barnacle instance segmentation and an interactive workbench for scientists
 
 ![Intertidal barnacle segmentation preview](Sample.png)
+
+![UI preview](sample2.png)
 
 Intertidal is my DALI Lab submission: a prototype that helps scientists count and inspect barnacles in field photographs. It combines automatic region selection, a Mask R-CNN model with PointRend, and an interactive viewer for exploring predicted masks, counts, and size distributions. Starting from COCO-pretrained weights, I fine-tuned the model for **600 training steps** on tiles from one annotated photograph, with a second photograph reserved for validation. Validation mask AP increased from **9.60 at 200 steps to a best of 15.01 at 500 steps**; the final checkpoint achieved **14.46 AP, 40.41 AP50, and 6.16 AP75**. In my demo usage, inference took roughly **15–30 seconds on a T4 GPU**, with startup and image size affecting latency. These results support further development, while the small dataset and provisional annotations mean the predictions still need scientific review.
 
