@@ -6,15 +6,17 @@
 
 ![UI preview](sample2.png)
 
-Intertidal is my DALI Lab submission: a prototype that helps scientists count and inspect barnacles in field photographs. It combines automatic region selection, a Mask R-CNN model with PointRend, and an interactive viewer for exploring predicted masks, counts, and size distributions. Starting from COCO-pretrained weights, I fine-tuned the model for **600 training steps** on tiles from one annotated photograph, with a second photograph reserved for validation. Validation mask AP increased from **9.60 at 200 steps to a best of 15.01 at 500 steps**; the final checkpoint achieved **14.46 AP, 40.41 AP50, and 6.16 AP75**. In my demo usage, inference took roughly **15–30 seconds on a T4 GPU**, with startup and image size affecting latency. These results support further development, while the small dataset and provisional annotations mean the predictions still need scientific review.
+Mask R-CNN with facebook Detectron2: Pointrend from Coco baseline. **600 training steps** on tiles from one annotated photograph, with a second photograph reserved for validation. Validation mask AP increased from **9.60 at 200 steps to a best of 15.01 at 500 steps**; the final checkpoint achieved **14.46 AP, 40.41 AP50, and 6.16 AP75**. Inference took roughly **15–30 seconds on a T4 GPU**, with startup and image size affecting latency. Still many things that need work, overall successful ability to scan barnacles.
 
-**Live demo:** public URL to be added.
+[Live Demo](https://alanrisal--barnacle-intertidal-web.us-east.modal.run/)
+
+Please do not spam uploads, I have no $ for modal...
 
 [Training notebook](notebooks/barnacle_training_colab.ipynb)
 
 ## The problem and proposed solution
 
-Counting densely packed barnacles by hand is slow, and a count alone does not show how individuals are distributed or how their sizes vary. I wanted to build a system that gives scientists an initial annotation they can inspect alongside the original photograph.
+Counting densely packed barnacles by hand is slow, and a count alone does not show how individuals are distributed or how their sizes vary. I wanted to build a system that gives scientists an initial annotation they can inspect.
 
 The workflow is simple: upload a photograph, select the analysis region, run inference, and explore the results. The workbench supports selectable masks, zoom and pan, confidence filtering, an instance table, and a size distribution. Scientists can export measurements as CSV or JSON and save an interactive HTML report.
 
@@ -28,13 +30,13 @@ The current viewer supports inspection; editing or deleting incorrect prediction
 | Prepare instance labels | Original photographs and the supplied blue-outline annotations | Instance masks, review overlays, and scene-separated COCO training and validation tiles |
 | Segment and measure | Image tiles and the fine-tuned model | Confidence-scored instance masks, reconciled predictions across overlapping tiles, counts, and size summaries |
 
-I implemented all three because a useful tool needs a complete path from the original photograph to measurements a scientist can inspect.
+I implemented all three because a usable case for a scientist requires the entire stack.
 
 ## Approach
 
 ### Region selection and data preparation
 
-The preparation pipeline uses OpenCV and NumPy on CPU. It identifies the inside of the green frame using HSV color thresholds and geometric checks. Regions can also be selected manually, and already cropped photographs can use whole-image mode.
+Prep with OpenCV and NumPy on CPU. Grab inside of green frame using HSV color thresholds and geometric checks. Regions can also be selected manually, and already cropped photographs can use whole-image mode.
 
 The supplied outlines are converted into instance labels, with ambiguous components flagged for review. Clean photographs are the model inputs; annotation overlays are used to construct labels and inspect results.
 
@@ -44,9 +46,9 @@ Images are divided into **640-pixel tiles with 25% overlap** at native resolutio
 
 I used a COCO-pretrained **Mask R-CNN with a ResNet-50/FPN backbone and PointRend**, adapted to one foreground class. Mask R-CNN predicts object boxes and individual masks; PointRend refines mask detail by focusing on uncertain points, including boundaries.
 
-The configuration favors small, densely packed instances: anchor sizes range from **8 to 128 pixels**, and the prediction/evaluation limit is **600 detections per tile**. This avoids the usual 100-detection ceiling becoming a bottleneck in crowded tiles.
+The configuration favors small, densely packed instances: anchor sizes range from **8 to 128 pixels**, and the prediction/evaluation limit is **600 detections per tile**. This avoids the usual 100-detection ceiling becoming a bottleneck in crowded tiles. (Although, i prob should have bumped up max anchor size for closeups..saw it become a problem when testing with stock image barnacles)
 
-At inference time, a separate overlap-reconciliation stage suppresses duplicate predictions across tiles. The viewer reports counts, mask areas, centroids, equivalent-circle diameters, coverage, and boundary flags. Masks touching region or internal tile boundaries are excluded from complete-size summaries, although they remain in the count.
+At inference time, a separate overlap-reconciliation stage suppresses duplicate predictions across tiles. This sounds complex but its just IoU again. The viewer reports counts, mask areas, centroids, equivalent-circle diameters, coverage, and boundary flags. Masks touching region or internal tile boundaries are excluded from complete-size summaries, although they remain in the count.
 
 Classical image processing was useful for detecting the frame and extracting supplied outlines. I chose learned instance segmentation for separating barnacles in varied textures and lighting. A plain Mask R-CNN and classical segmentation would be useful comparison baselines; I did not run a controlled benchmark of three approaches.
 
@@ -110,6 +112,8 @@ The improvements I would prioritize are:
 
 This project made the R-CNN family much more concrete for me. I learned to follow a tile through region proposals, box prediction, mask prediction, and PointRend refinement, and to connect those stages to the training losses and configuration settings. Looking at the segmentation overlays was one of my favorite parts of the project.
 
+I used Pollock's /Teach claude skill, it helped a ton with understanding parallel processes in Mask R-CNN's
+
 I also learned that tiling is more than cropping an image: overlap creates duplicate predictions, boundaries can truncate objects, and evaluation needs to respect the original source photographs. PointRend refines individual masks; reconciliation across tile borders is a separate part of the pipeline.
 
 The biggest takeaway was learning to read the metrics alongside the visual results. Better-looking overlays, lower training loss, or more predicted instances do not automatically mean better performance. The best-versus-final checkpoint comparison helped me see why validation matters.
@@ -126,11 +130,3 @@ The biggest takeaway was learning to read the metrics alongside the visual resul
 | [Source package](src/barnacle_challenge) | Region selection, annotations, datasets, inference reconciliation, and measurements |
 | [Training and viewer code](training) | Model training, inference entry points, and the interactive viewer |
 
-To prepare and structurally validate the dataset from the repository root using the existing Windows virtual environment:
-
-```powershell
-.\.venv\Scripts\python.exe -m barnacle_challenge prepare-data --output artifacts/pretraining
-.\.venv\Scripts\python.exe -m barnacle_challenge validate-data artifacts/pretraining
-```
-
-Use a new output directory if `artifacts/pretraining` already exists. Structural validation checks the dataset format and consistency; label and region review are still needed. Preparation runs on CPU; the training notebook uses a GPU runtime.
